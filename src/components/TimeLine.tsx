@@ -25,7 +25,26 @@ export const TimeLine = observer(() => {
   );
 
   const isActive = canDrop && isOver;
+  const parentTimelineRef = useRef(null);
+  const timelineRef = useRef(null);
+  const getWidth = () => {
+    if (timelineRef.current) {
+      return timelineRef.current?.offsetWidth;
+    }
+    return 0; // Default width if ref is not attached
+  };
 
+  const getParentWidth = () => {
+    if (parentTimelineRef.current) {
+      return parentTimelineRef.current?.offsetWidth;
+    }
+    return 0; // Default width if ref is not attached
+  };
+  const [width, setWidth] = useState()
+  useEffect(() => {
+    setWidth(getWidth())
+  }, [])
+  
 
   return (
     <>
@@ -40,10 +59,10 @@ export const TimeLine = observer(() => {
             }}
           ></div>
 
-          <div>
-            <div>
+          <div ref={parentTimelineRef}  style={{ overflowX: 'auto', }}>
+            <div ref={timelineRef} style={{ width: `${width}px` }}>
               {store.editorElements.map((element, index) => {
-                return <TimeFrameView elementIndex={index} key={element.id} element={element} />;
+                return <TimeFrameView getParentWidth={getParentWidth}  setWidth={setWidth} getWidth={getWidth} elementIndex={index} key={element.id} element={element} />;
               })
               }
               <div ref={drop} style={{

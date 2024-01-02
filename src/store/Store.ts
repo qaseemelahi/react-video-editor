@@ -313,10 +313,10 @@ export class Store {
     if (timeFrame.start != undefined && timeFrame.start < 0) {
       timeFrame.start = 0;
     }
-    if (timeFrame.end != undefined && timeFrame.end > this.maxTime) {
-      timeFrame.end = this.maxTime;
-      // this.maxTime = timeFrame.end
-    }
+    // if (timeFrame.end != undefined && timeFrame.end > this.maxTime) {
+    //   // timeFrame.end = this.maxTime;
+    //   this.maxTime = timeFrame.end
+    // }
     const newEditorElement = {
       ...editorElement,
       timeFrame: {

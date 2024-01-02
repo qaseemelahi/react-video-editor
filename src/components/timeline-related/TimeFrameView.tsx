@@ -6,14 +6,16 @@ import { observer } from "mobx-react";
 import DragableView from "./DragableView";
 import { useDrop } from "react-dnd";
 
-export const TimeFrameView = observer((props: { element: EditorElement,elementIndex: number}) => {
+export const TimeFrameView = observer((props: { element: EditorElement,elementIndex: number,getParentWidth: ()=>number, getWidth: ()=>number, setWidth:(arg: number )=> void }) => {
   const store = React.useContext(StoreContext);
-  const { element, elementIndex} = props;
+  const { element, elementIndex, getWidth, setWidth, getParentWidth } = props;
   const disabled = element.type === "audio";
   const isSelected = store.selectedElement?.id === element.id;
   const bgColorOnSelected = isSelected ? "bg-slate-800" : "bg-slate-600";
   const disabledCursor = disabled ? "cursor-no-drop" : "cursor-ew-resize";
-    const [{ canDrop, isOver }, drop] = useDrop(
+  
+  
+  const [{ canDrop, isOver }, drop] = useDrop(
     () => ({
       accept: 'box',
       drop: () => ({
@@ -36,7 +38,7 @@ export const TimeFrameView = observer((props: { element: EditorElement,elementIn
 100
   return (
     <>
-  {isActive &&  <div style={{marginBottom: '4px', height: '2px', backgroundColor: 'green'}} />}
+    {isActive &&  <div style={{marginBottom: '4px', height: '2px', backgroundColor: 'green'}} />}
      <div
       onClick={() => {
         store.setSelectedElement(element);
@@ -76,6 +78,17 @@ export const TimeFrameView = observer((props: { element: EditorElement,elementIn
         onChange={(value) => {
           const { start, end } = element.timeFrame;
           const newEnd = value + (end - start);
+
+          const currentTimelineParentWidth = getParentWidth();
+          const currentTimelineWidth = getWidth()
+          const newWidth = (newEnd / store.maxTime) * currentTimelineWidth;
+          if(newWidth > currentTimelineParentWidth) {
+            store.setMaxTime(newEnd)
+            setWidth(newWidth)
+          }else {
+            store.setMaxTime(30 * 1000)
+            setWidth(currentTimelineParentWidth)
+          }
           store.updateEditorElementTimeFrame(element, {
             start: value,
             end: newEnd,
@@ -105,5 +118,6 @@ export const TimeFrameView = observer((props: { element: EditorElement,elementIn
       </DragableView>
     </div>
     </>
+   
   );
 });
