@@ -4,6 +4,7 @@ import { StoreContext } from "@/store";
 import { formatTimeToMinSec } from "@/utils";
 import { observer } from "mobx-react";
 import { MdAdd } from "react-icons/md";
+import { useDrag } from "react-dnd";
 
 type VideoResourceProps = {
   video: string;
@@ -16,8 +17,31 @@ export const VideoResource = observer(
     const [formatedVideoLength, setFormatedVideoLength] =
       React.useState("00:00");
 
+    
+      const [{ opacity }, drag] = useDrag(
+        () => ({
+          type: 'box',
+          item: { index },
+          end(item, monitor) {
+            const dropResult = monitor.getDropResult();
+            if(dropResult && item) {
+              if (dropResult?.name !== `Timeline Item`) {
+                store.addVideo(item.index)
+              } else {
+                store.addVideo(item.index, dropResult?.elementIndex )
+              }
+            }
+           
+          },
+          collect: (monitor) => ({
+            opacity: monitor.isDragging() ? 0.4 : 1,
+          }),
+        }),
+        [name]
+      );
+
     return (
-      <div className="rounded-lg overflow-hidden items-center bg-slate-800 m-[15px] flex flex-col relative">
+      <div ref={drag} style={{ opacity }} className="rounded-lg overflow-hidden items-center bg-slate-800 m-[15px] flex flex-col relative">
         <div className="bg-[rgba(0,0,0,.25)] text-white py-1 absolute text-base top-2 right-2">
           {formatedVideoLength}
         </div>

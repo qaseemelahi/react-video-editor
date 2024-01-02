@@ -1,25 +1,49 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { EditorElement } from "@/types";
 import { StoreContext } from "@/store";
 import { observer } from "mobx-react";
 import DragableView from "./DragableView";
+import { useDrop } from "react-dnd";
 
-export const TimeFrameView = observer((props: { element: EditorElement }) => {
+export const TimeFrameView = observer((props: { element: EditorElement,elementIndex: number}) => {
   const store = React.useContext(StoreContext);
-  const { element } = props;
+  const { element, elementIndex} = props;
   const disabled = element.type === "audio";
   const isSelected = store.selectedElement?.id === element.id;
   const bgColorOnSelected = isSelected ? "bg-slate-800" : "bg-slate-600";
   const disabledCursor = disabled ? "cursor-no-drop" : "cursor-ew-resize";
+    const [{ canDrop, isOver }, drop] = useDrop(
+    () => ({
+      accept: 'box',
+      drop: () => ({
+        name: `Timeline Item`,
+        allowedDropEffect: 'copy',
+        elementIndex,
+      }),
+      collect: (monitor) => ({
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
+      }),
+    }),
+    [elementIndex]
+  );
 
+  const isActive = canDrop && isOver;
+
+  const totalWidth = ((element.timeFrame.end - element.timeFrame.start) /
+  store.maxTime) *
+100
   return (
-    <div
+    <>
+  {isActive &&  <div style={{marginBottom: '4px', height: '2px', backgroundColor: 'green'}} />}
+     <div
       onClick={() => {
         store.setSelectedElement(element);
       }}
+      ref={drop}
       key={element.id}
-      className={`relative width-full h-[25px] my-2 ${
+      className={`relative h-[90px]  bg-gray-200 my-2 ${
         isSelected ? "border-2 border-indigo-600 bg-slate-200" : ""
       }`}
     >
@@ -45,17 +69,16 @@ export const TimeFrameView = observer((props: { element: EditorElement }) => {
         disabled={disabled}
         style={{
           width: `${
-            ((element.timeFrame.end - element.timeFrame.start) /
-              store.maxTime) *
-            100
+            totalWidth
           }%`,
         }}
         total={store.maxTime}
         onChange={(value) => {
           const { start, end } = element.timeFrame;
+          const newEnd = value + (end - start);
           store.updateEditorElementTimeFrame(element, {
             start: value,
-            end: value + (end - start),
+            end: newEnd,
           });
         }}
       >
@@ -81,5 +104,6 @@ export const TimeFrameView = observer((props: { element: EditorElement }) => {
         ></div>
       </DragableView>
     </div>
+    </>
   );
 });

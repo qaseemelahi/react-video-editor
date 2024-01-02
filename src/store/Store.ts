@@ -315,6 +315,7 @@ export class Store {
     }
     if (timeFrame.end != undefined && timeFrame.end > this.maxTime) {
       timeFrame.end = this.maxTime;
+      // this.maxTime = timeFrame.end
     }
     const newEditorElement = {
       ...editorElement,
@@ -330,10 +331,24 @@ export class Store {
   }
 
 
-  addEditorElement(editorElement: EditorElement) {
-    this.setEditorElements([...this.editorElements, editorElement]);
+  addEditorElement(editorElement: EditorElement, elementIndex?: number) {
+    if(elementIndex !== undefined) {
+      if(elementIndex === 0) {
+        this.setEditorElements([editorElement, ...this.editorElements, ]);
+        this.setSelectedElement(this.editorElements[0]);
+      } else {
+        const tempArray = [...this.editorElements]
+        tempArray.splice(elementIndex, 0, editorElement)
+        this.setEditorElements(tempArray);
+        this.setSelectedElement(this.editorElements[elementIndex]);
+      }
+
+    } else {
+      this.setEditorElements([...this.editorElements, editorElement]);
+      this.setSelectedElement(this.editorElements[this.editorElements.length - 1]);
+
+    }
     this.refreshElements();
-    this.setSelectedElement(this.editorElements[this.editorElements.length - 1]);
   }
 
   removeEditorElement(id: string) {
@@ -404,7 +419,7 @@ export class Store {
     this.updateAudioElements();
   }
 
-  addVideo(index: number) {
+  addVideo(index: number, elementIndex?: number) {
     const videoElement = document.getElementById(`video-${index}`)
     if (!isHtmlVideoElement(videoElement)) {
       return;
@@ -438,6 +453,7 @@ export class Store {
           }
         },
       },
+      elementIndex
     );
   }
 
@@ -620,6 +636,43 @@ export class Store {
       this.saveCanvasToVideoWithAudioMp4();
     }
   }
+  captureVideoFrames(videoUrl, frameRate) {
+    return new Promise((resolve, reject) => {
+        const video = document.createElement('video');
+        const frames = [];
+        video.src = videoUrl;
+        video.load();
+
+        video.addEventListener('loadeddata', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+
+            function captureFrame() {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                frames.push(canvas.toDataURL('image/jpeg'));
+            }
+
+            video.addEventListener('play', () => {
+                const interval = setInterval(() => {
+                    if (video.ended) {
+                        clearInterval(interval);
+                        resolve(frames);
+                    } else {
+                        captureFrame();
+                    }
+                }, 1000 / frameRate);
+            });
+
+            video.play().catch(reject);
+        });
+
+        video.addEventListener('error', (e) => {
+            reject(e);
+        });
+    });
+}
   saveCanvasToVideoWithAudioMp4() {
     const store = this;
     const canvas = document.getElementById("canvas") as HTMLCanvasElement;
