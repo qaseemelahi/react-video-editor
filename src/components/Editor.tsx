@@ -49,9 +49,6 @@ export const Editor = observer(() => {
   }, []);
   return (
     <div className="grid grid-rows-[20px_500px_1fr] grid-cols-[60px_200px_800px_1fr] h-[100%]">
-      <div className="col-span-4 bg-slate-300 text-right px-2 text-xs">
-        Created By Amit Digga
-      </div>
       <div className="tile row-span-2 flex flex-col">
         <Menu />
       </div>
